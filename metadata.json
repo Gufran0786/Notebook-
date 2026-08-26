@@ -1,0 +1,6 @@
+{
+  "name": "Notebook",
+  "description": "Realistic Google Play Books-style notebook with pure white pages, image attachments, notes editing, and customizable cover.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

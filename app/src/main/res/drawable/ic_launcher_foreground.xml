@@ -1,0 +1,36 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Book Shadow -->
+    <path
+        android:fillColor="#33000000"
+        android:pathData="M30,30h48c2.2,0 4,1.8 4,4v44c0,2.2 -1.8,4 -4,4h-48c-2.2,0 -4,-1.8 -4,-4v-44c0,-2.2 1.8,-4 4,-4z" />
+    <!-- Book Body -->
+    <path
+        android:fillColor="#2D1F08"
+        android:pathData="M28,26h48c2.2,0 4,1.8 4,4v48c0,2.2 -1.8,4 -4,4h-48c-2.2,0 -4,-1.8 -4,-4v-48c0,-2.2 1.8,-4 4,-4z" />
+    <!-- Gold Border -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFDF73"
+        android:strokeWidth="1.5"
+        android:pathData="M33,31h38v42h-38z" />
+    <!-- Spine Ribs -->
+    <path
+        android:fillColor="#E6C35C"
+        android:pathData="M24,26h6v56h-6z" />
+    <!-- Pure White Pages Edge -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M76,30h3v48h-3z" />
+    <!-- Golden Emblem Crest -->
+    <path
+        android:fillColor="#FFDF73"
+        android:pathData="M52,44c-3.3,0 -6,2.7 -6,6c0,4.5 6,9 6,9s6,-4.5 6,-9c0,-3.3 -2.7,-6 -6,-6z" />
+    <!-- Bookmark Ribbon -->
+    <path
+        android:fillColor="#D32F2F"
+        android:pathData="M40,26h6v20l-3,-3l-3,3z" />
+</vector>
