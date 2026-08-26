@@ -8,11 +8,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,7 +29,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Bookmark
@@ -40,12 +41,14 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.FormatQuote
+import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.LinearScale
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material.icons.filled.Undo
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -59,9 +62,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -71,6 +78,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -110,9 +119,11 @@ fun PureWhitePageContent(
     pageNumber: Int,
     totalPages: Int,
     defaultInkColor: String = "#1A1A1A",
+    fontSizeSp: Float = 16f,
     saveFeedbackMessage: String? = null,
     onTitleChange: (String) -> Unit,
     onContentChange: (String) -> Unit,
+    onUpdateFontSize: (Float) -> Unit = {},
     onToggleBookmark: () -> Unit,
     onAddImageClick: () -> Unit,
     onRemoveImage: (Int) -> Unit,
@@ -129,6 +140,24 @@ fun PureWhitePageContent(
 ) {
     val scrollState = rememberScrollState()
     val density = LocalDensity.current
+
+    // Immediate reactive local text state for responsive typing
+    var localTitle by remember(page.id) { mutableStateOf(page.title) }
+    var localContent by remember(page.id) { mutableStateOf(page.content) }
+
+    LaunchedEffect(page.title) {
+        if (localTitle != page.title) {
+            localTitle = page.title
+        }
+    }
+    LaunchedEffect(page.content) {
+        if (localContent != page.content) {
+            localContent = page.content
+        }
+    }
+
+    val contentFocusRequester = remember { FocusRequester() }
+    var showFontSizeDialog by remember { mutableStateOf(false) }
 
     val imageList = remember(page.imageUrisJson) {
         ImageStorage.parseJsonArray(page.imageUrisJson)
@@ -349,10 +378,13 @@ fun PureWhitePageContent(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Title Input (Always editable with auto-save)
+                // Title Input (Always editable with instant auto-save)
                 BasicTextField(
-                    value = page.title,
-                    onValueChange = onTitleChange,
+                    value = localTitle,
+                    onValueChange = { newTitle ->
+                        localTitle = newTitle
+                        onTitleChange(newTitle)
+                    },
                     textStyle = TextStyle(
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
@@ -364,7 +396,7 @@ fun PureWhitePageContent(
                         .fillMaxWidth()
                         .testTag("page_title_input_${page.id}"),
                     decorationBox = { innerTextField ->
-                        if (page.title.isEmpty()) {
+                        if (localTitle.isEmpty()) {
                             Text(
                                 text = "Title...",
                                 fontSize = 22.sp,
@@ -389,7 +421,7 @@ fun PureWhitePageContent(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Toolbar with Format, Straight Line Tool Button, Palette, Photo Picker
+                // Toolbar with Format, Straight Line Tool Button, Font Size Adjuster, Palette, Photo Picker
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -435,12 +467,82 @@ fun PureWhitePageContent(
 
                         Spacer(modifier = Modifier.width(6.dp))
 
+                        // Text Size Controls (A- / Size Badge / A+)
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = Color(0xFFE8EAF6),
+                            modifier = Modifier.padding(horizontal = 2.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                            ) {
+                                // Decrease font size (Chhota)
+                                IconButton(
+                                    onClick = {
+                                        val newSize = (fontSizeSp - 2f).coerceAtLeast(11f)
+                                        onUpdateFontSize(newSize)
+                                    },
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .testTag("font_size_decrease_${page.id}")
+                                ) {
+                                    Text(
+                                        text = "A-",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF283593)
+                                    )
+                                }
+
+                                // Font size badge - clickable for popup presets
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = Color.White,
+                                    modifier = Modifier
+                                        .clickable { showFontSizeDialog = true }
+                                        .padding(horizontal = 2.dp)
+                                        .testTag("font_size_badge_${page.id}")
+                                ) {
+                                    Text(
+                                        text = "${fontSizeSp.roundToInt()}sp",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF1A237E),
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+
+                                // Increase font size (Bada)
+                                IconButton(
+                                    onClick = {
+                                        val newSize = (fontSizeSp + 2f).coerceAtMost(38f)
+                                        onUpdateFontSize(newSize)
+                                    },
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .testTag("font_size_increase_${page.id}")
+                                ) {
+                                    Text(
+                                        text = "A+",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF283593)
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(6.dp))
+
                         // Insert Bullet
                         IconButton(
                             onClick = {
-                                val current = page.content
+                                val current = localContent
                                 val prefix = if (current.isEmpty() || current.endsWith("\n")) "• " else "\n• "
-                                onContentChange(current + prefix)
+                                val updated = current + prefix
+                                localContent = updated
+                                onContentChange(updated)
                             },
                             modifier = Modifier.size(30.dp)
                         ) {
@@ -450,9 +552,11 @@ fun PureWhitePageContent(
                         // Insert Quote
                         IconButton(
                             onClick = {
-                                val current = page.content
+                                val current = localContent
                                 val prefix = if (current.isEmpty() || current.endsWith("\n")) "\" " else "\n\" "
-                                onContentChange(current + prefix)
+                                val updated = current + prefix
+                                localContent = updated
+                                onContentChange(updated)
                             },
                             modifier = Modifier.size(30.dp)
                         ) {
@@ -463,7 +567,9 @@ fun PureWhitePageContent(
                         IconButton(
                             onClick = {
                                 val timeNow = SimpleDateFormat("[hh:mm a] ", Locale.getDefault()).format(Date())
-                                onContentChange(page.content + (if (page.content.isNotEmpty() && !page.content.endsWith("\n")) "\n" else "") + timeNow)
+                                val updated = localContent + (if (localContent.isNotEmpty() && !localContent.endsWith("\n")) "\n" else "") + timeNow
+                                localContent = updated
+                                onContentChange(updated)
                             },
                             modifier = Modifier.size(30.dp)
                         ) {
@@ -704,34 +810,45 @@ fun PureWhitePageContent(
                     }
                 }
 
-                // Note Body Text Editor (Always fully editable & permanent auto-saved)
-                BasicTextField(
-                    value = page.content,
-                    onValueChange = onContentChange,
-                    textStyle = TextStyle(
-                        fontSize = 16.sp,
-                        lineHeight = 26.sp,
-                        fontFamily = FontFamily.SansSerif,
-                        color = activeInkColor
-                    ),
-                    cursorBrush = SolidColor(activeInkColor),
+                // Note Body Text Editor (Instant reactive typing & click-to-focus)
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(380.dp)
-                        .testTag("page_content_input_${page.id}"),
-                    decorationBox = { innerTextField ->
-                        if (page.content.isEmpty()) {
-                            Text(
-                                text = "Start writing your thoughts, notes, and ideas on this pure white page...\n\n• Tap 'Draw Line' above to draw crisp straight lines in any direction\n• Tap the palette button to change your writing ink color\n• Tap the photo icon to attach pictures\n• Turn pages with realistic Google Play Books 3D curl\n• Everything is permanently saved and editable anytime",
-                                fontSize = 15.sp,
-                                lineHeight = 24.sp,
-                                color = Color(0xFF9E9E9E),
-                                fontFamily = FontFamily.SansSerif
-                            )
+                        .defaultMinSize(minHeight = 380.dp)
+                        .clickable { contentFocusRequester.requestFocus() }
+                ) {
+                    BasicTextField(
+                        value = localContent,
+                        onValueChange = { newContent ->
+                            localContent = newContent
+                            onContentChange(newContent)
+                        },
+                        textStyle = TextStyle(
+                            fontSize = fontSizeSp.sp,
+                            lineHeight = (fontSizeSp * 1.55f).sp,
+                            fontFamily = FontFamily.SansSerif,
+                            color = activeInkColor
+                        ),
+                        cursorBrush = SolidColor(activeInkColor),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .defaultMinSize(minHeight = 380.dp)
+                            .focusRequester(contentFocusRequester)
+                            .testTag("page_content_input_${page.id}"),
+                        decorationBox = { innerTextField ->
+                            if (localContent.isEmpty()) {
+                                Text(
+                                    text = "Start writing your thoughts, notes, and ideas on this pure white page...\n\n• Tap 'Draw Line' above to draw crisp straight lines in any direction\n• Tap 'A-' or 'A+' to make your writing smaller or larger\n• Tap the palette button to change your writing ink color\n• Tap the photo icon to attach pictures\n• Turn pages with realistic Google Play Books 3D curl\n• Everything is permanently saved and editable anytime",
+                                    fontSize = fontSizeSp.sp,
+                                    lineHeight = (fontSizeSp * 1.55f).sp,
+                                    color = Color(0xFF9E9E9E),
+                                    fontFamily = FontFamily.SansSerif
+                                )
+                            }
+                            innerTextField()
                         }
-                        innerTextField()
-                    }
-                )
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -867,6 +984,128 @@ fun PureWhitePageContent(
                         }
                     }
                 }
+            }
+
+            // Font Size Selection Dialog
+            if (showFontSizeDialog) {
+                AlertDialog(
+                    onDismissRequest = { showFontSizeDialog = false },
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.FormatSize,
+                                contentDescription = "Font Size",
+                                tint = Color(0xFF3F51B5),
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Text Font Size",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
+                            )
+                        }
+                    },
+                    text = {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Text(
+                                text = "Likhne wale text ka size chhota ya bada karein:",
+                                fontSize = 13.sp,
+                                color = Color(0xFF616161)
+                            )
+
+                            // Quick preset sizes
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                listOf(
+                                    12f to "12sp (Small)",
+                                    14f to "14sp (Compact)",
+                                    16f to "16sp (Default)",
+                                    20f to "20sp (Medium)",
+                                    24f to "24sp (Large)",
+                                    30f to "30sp (Huge)"
+                                ).forEach { (size, label) ->
+                                    FilterChip(
+                                        selected = fontSizeSp.roundToInt() == size.roundToInt(),
+                                        onClick = {
+                                            onUpdateFontSize(size)
+                                        },
+                                        label = { Text(label, fontSize = 12.sp) },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = Color(0xFF3F51B5),
+                                            selectedLabelColor = Color.White
+                                        )
+                                    )
+                                }
+                            }
+
+                            // Continuous Slider
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Current: ${fontSizeSp.roundToInt()} sp",
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 14.sp,
+                                        color = Color(0xFF1A237E)
+                                    )
+                                    Text(
+                                        text = if (fontSizeSp < 15f) "Chhota (Small)" else if (fontSizeSp > 22f) "Bada (Large)" else "Standard",
+                                        fontSize = 12.sp,
+                                        color = Color(0xFF757575)
+                                    )
+                                }
+
+                                Slider(
+                                    value = fontSizeSp,
+                                    onValueChange = { onUpdateFontSize(it) },
+                                    valueRange = 11f..38f,
+                                    steps = 26,
+                                    colors = SliderDefaults.colors(
+                                        thumbColor = Color(0xFF3F51B5),
+                                        activeTrackColor = Color(0xFF3F51B5)
+                                    ),
+                                    modifier = Modifier.testTag("font_size_dialog_slider")
+                                )
+                            }
+
+                            // Live sample preview
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color(0xFFF5F5F5),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = "Preview: The quick brown fox jumps over the lazy dog.",
+                                    fontSize = fontSizeSp.sp,
+                                    lineHeight = (fontSizeSp * 1.55f).sp,
+                                    color = activeInkColor,
+                                    modifier = Modifier.padding(10.dp)
+                                )
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = { showFontSizeDialog = false },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3F51B5))
+                        ) {
+                            Text("Done / Theek Hai", color = Color.White)
+                        }
+                    }
+                )
             }
         }
     }

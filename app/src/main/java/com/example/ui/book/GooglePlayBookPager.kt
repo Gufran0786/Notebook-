@@ -181,8 +181,6 @@ fun GooglePlayBookPager(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .then(modifierDraggable)
-                .then(edgeTapModifier)
         ) {
             val offsetVal = dragOffset.value
             val progress = (offsetVal / totalWidthPx).coerceIn(-1f, 1f)

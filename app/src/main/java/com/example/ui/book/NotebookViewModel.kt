@@ -143,8 +143,7 @@ class NotebookViewModel(application: Application) : AndroidViewModel(application
         val page = currentList.find { it.id == pageId } ?: return
         val updated = page.copy(title = newTitle, updatedAt = System.currentTimeMillis())
 
-        autoSaveJob?.cancel()
-        autoSaveJob = viewModelScope.launch {
+        viewModelScope.launch {
             repository.updatePage(updated)
         }
     }
@@ -156,8 +155,15 @@ class NotebookViewModel(application: Application) : AndroidViewModel(application
 
         autoSaveJob?.cancel()
         autoSaveJob = viewModelScope.launch {
-            delay(150) // Debounce rapid keystrokes
+            delay(150)
             repository.updatePage(updated)
+        }
+    }
+
+    fun updateFontSize(fontSizeSp: Float) {
+        viewModelScope.launch {
+            val current = settings.value
+            repository.saveSettings(current.copy(fontSizeSp = fontSizeSp.coerceIn(11f, 38f)))
         }
     }
 

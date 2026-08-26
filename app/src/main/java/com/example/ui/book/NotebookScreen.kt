@@ -351,9 +351,11 @@ fun NotebookScreen(
                             pageNumber = pageIdx,
                             totalPages = pages.size,
                             defaultInkColor = settings.defaultInkColor,
+                            fontSizeSp = settings.fontSizeSp,
                             saveFeedbackMessage = saveFeedbackMessage,
                             onTitleChange = { viewModel.updatePageTitle(notePage.id, it) },
                             onContentChange = { viewModel.updatePageContent(notePage.id, it) },
+                            onUpdateFontSize = { viewModel.updateFontSize(it) },
                             onToggleBookmark = { viewModel.toggleBookmark(notePage.id) },
                             onAddImageClick = {
                                 targetPageIdForImages = notePage.id
