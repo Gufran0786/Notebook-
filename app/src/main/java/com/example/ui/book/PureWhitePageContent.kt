@@ -431,255 +431,237 @@ fun PureWhitePageContent(
                             if (isStraightLineMode) Color(0xFFEDE7F6) else Color(0xFFFAFAFA),
                             RoundedCornerShape(8.dp)
                         )
+                        .horizontalScroll(rememberScrollState())
                         .padding(horizontal = 6.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
+                    // Straight Line Tool Injector Toggle Button (Ruler / Straight Line Mode)
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = if (isStraightLineMode) Color(0xFF673AB7) else Color(0xFFEEEEEE),
+                        modifier = Modifier
+                            .clickable { isStraightLineMode = !isStraightLineMode }
+                            .testTag("straight_line_tool_toggle_${page.id}")
                     ) {
-                        // Straight Line Tool Injector Toggle Button (Ruler / Straight Line Mode)
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = if (isStraightLineMode) Color(0xFF673AB7) else Color(0xFFEEEEEE),
-                            modifier = Modifier
-                                .clickable { isStraightLineMode = !isStraightLineMode }
-                                .testTag("straight_line_tool_toggle_${page.id}")
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.Straighten,
-                                    contentDescription = "Draw Straight Line in any direction",
-                                    tint = if (isStraightLineMode) Color.White else Color(0xFF5E35B1),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = if (isStraightLineMode) "Drawing Line" else "Draw Line",
-                                    fontSize = 11.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isStraightLineMode) Color.White else Color(0xFF5E35B1)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(6.dp))
-
-                        // Text Size Controls (A- / Size Badge / A+)
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = Color(0xFFE8EAF6),
-                            modifier = Modifier.padding(horizontal = 2.dp)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                            ) {
-                                // Decrease font size (Chhota)
-                                IconButton(
-                                    onClick = {
-                                        val newSize = (fontSizeSp - 2f).coerceAtLeast(11f)
-                                        onUpdateFontSize(newSize)
-                                    },
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .testTag("font_size_decrease_${page.id}")
-                                ) {
-                                    Text(
-                                        text = "A-",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF283593)
-                                    )
-                                }
-
-                                // Font size badge - clickable for popup presets
-                                Surface(
-                                    shape = RoundedCornerShape(8.dp),
-                                    color = Color.White,
-                                    modifier = Modifier
-                                        .clickable { showFontSizeDialog = true }
-                                        .padding(horizontal = 2.dp)
-                                        .testTag("font_size_badge_${page.id}")
-                                ) {
-                                    Text(
-                                        text = "${fontSizeSp.roundToInt()}sp",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF1A237E),
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                    )
-                                }
-
-                                // Increase font size (Bada)
-                                IconButton(
-                                    onClick = {
-                                        val newSize = (fontSizeSp + 2f).coerceAtMost(38f)
-                                        onUpdateFontSize(newSize)
-                                    },
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .testTag("font_size_increase_${page.id}")
-                                 ) {
-                                    Text(
-                                        text = "A+",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF283593)
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(6.dp))
-
-                        // Letters Color Studio Button (Individual letter color & rainbow)
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = Color(0xFFFFF3E0),
-                            border = ButtonDefaults.outlinedButtonBorder.copy(
-                                brush = Brush.horizontalGradient(listOf(Color(0xFFFF9800), Color(0xFFE91E63))),
-                                width = 1.dp
-                            ),
-                            modifier = Modifier
-                                .clickable { showLetterColorStudio = true }
-                                .padding(horizontal = 2.dp)
-                                .testTag("letter_color_studio_button_${page.id}")
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp)
-                            ) {
-                                Text("🔤", fontSize = 12.sp)
-                                Spacer(modifier = Modifier.width(3.dp))
-                                Text(
-                                    text = "Letters Color",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFFE65100)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(6.dp))
-
-                        // Insert Bullet
-                        IconButton(
-                            onClick = {
-                                val current = localContent
-                                val prefix = if (current.isEmpty() || current.endsWith("\n")) "• " else "\n• "
-                                val updated = current + prefix
-                                localContent = updated
-                                onContentChange(updated)
-                            },
-                            modifier = Modifier.size(30.dp)
-                        ) {
-                            Icon(Icons.Default.FormatListBulleted, contentDescription = "Bullet List", tint = Color(0xFF555555), modifier = Modifier.size(16.dp))
-                        }
-
-                        // Insert Quote
-                        IconButton(
-                            onClick = {
-                                val current = localContent
-                                val prefix = if (current.isEmpty() || current.endsWith("\n")) "\" " else "\n\" "
-                                val updated = current + prefix
-                                localContent = updated
-                                onContentChange(updated)
-                            },
-                            modifier = Modifier.size(30.dp)
-                        ) {
-                            Icon(Icons.Default.FormatQuote, contentDescription = "Quote", tint = Color(0xFF555555), modifier = Modifier.size(16.dp))
-                        }
-
-                        // Insert Current Time
-                        IconButton(
-                            onClick = {
-                                val timeNow = SimpleDateFormat("[hh:mm a] ", Locale.getDefault()).format(Date())
-                                val updated = localContent + (if (localContent.isNotEmpty() && !localContent.endsWith("\n")) "\n" else "") + timeNow
-                                localContent = updated
-                                onContentChange(updated)
-                            },
-                            modifier = Modifier.size(30.dp)
-                        ) {
-                            Icon(Icons.Default.Today, contentDescription = "Insert Timestamp", tint = Color(0xFF555555), modifier = Modifier.size(16.dp))
-                        }
-
-                        // Quick Favorite Inks Swatches
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            modifier = Modifier
-                                .weight(1f)
-                                .horizontalScroll(rememberScrollState())
-                                .padding(horizontal = 4.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
-                            ColorUtils.quickFavorites.forEach { hexColor ->
-                                val swatchColor = ColorUtils.parseColor(hexColor)
-                                val isSelected = activeInkHex.equals(hexColor, ignoreCase = true)
+                            Icon(
+                                Icons.Default.Straighten,
+                                contentDescription = "Draw Straight Line in any direction",
+                                tint = if (isStraightLineMode) Color.White else Color(0xFF5E35B1),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = if (isStraightLineMode) "Drawing Line" else "Draw Line",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isStraightLineMode) Color.White else Color(0xFF5E35B1)
+                            )
+                        }
+                    }
 
-                                Box(
-                                    modifier = Modifier
-                                        .size(if (isSelected) 20.dp else 16.dp)
-                                        .clip(CircleShape)
-                                        .background(swatchColor)
-                                        .border(
-                                            width = if (isSelected) 2.dp else 1.dp,
-                                            color = if (isSelected) Color(0xFF1976D2) else Color(0x33000000),
-                                            shape = CircleShape
-                                        )
-                                        .clickable { onSelectQuickColor(hexColor) }
+                    // Text Size Controls (A- / Size Badge / A+)
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFFE8EAF6),
+                        modifier = Modifier.padding(horizontal = 2.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                        ) {
+                            // Decrease font size (Chhota)
+                            IconButton(
+                                onClick = {
+                                    val newSize = (fontSizeSp - 2f).coerceAtLeast(11f)
+                                    onUpdateFontSize(newSize)
+                                },
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .testTag("font_size_decrease_${page.id}")
+                            ) {
+                                Text(
+                                    text = "A-",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF283593)
+                                )
+                            }
+
+                            // Font size badge - clickable for popup presets
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color.White,
+                                modifier = Modifier
+                                    .clickable { showFontSizeDialog = true }
+                                    .padding(horizontal = 2.dp)
+                                    .testTag("font_size_badge_${page.id}")
+                            ) {
+                                Text(
+                                    text = "${fontSizeSp.roundToInt()}sp",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF1A237E),
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+
+                            // Increase font size (Bada)
+                            IconButton(
+                                onClick = {
+                                    val newSize = (fontSizeSp + 2f).coerceAtMost(38f)
+                                    onUpdateFontSize(newSize)
+                                },
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .testTag("font_size_increase_${page.id}")
+                            ) {
+                                Text(
+                                    text = "A+",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF283593)
                                 )
                             }
                         }
                     }
 
+                    // Letters Color Studio Button (Individual letter color & rainbow)
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFFFFF3E0),
+                        border = ButtonDefaults.outlinedButtonBorder.copy(
+                            brush = Brush.horizontalGradient(listOf(Color(0xFFFF9800), Color(0xFFE91E63))),
+                            width = 1.dp
+                        ),
+                        modifier = Modifier
+                            .clickable { showLetterColorStudio = true }
+                            .padding(horizontal = 2.dp)
+                            .testTag("letter_color_studio_button_${page.id}")
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text("🔤", fontSize = 12.sp)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Letters Color",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFE65100)
+                            )
+                        }
+                    }
+
+                    // Insert Bullet
+                    IconButton(
+                        onClick = {
+                            val current = localContent
+                            val prefix = if (current.isEmpty() || current.endsWith("\n")) "• " else "\n• "
+                            val updated = current + prefix
+                            localContent = updated
+                            onContentChange(updated)
+                        },
+                        modifier = Modifier.size(30.dp)
+                    ) {
+                        Icon(Icons.Default.FormatListBulleted, contentDescription = "Bullet List", tint = Color(0xFF555555), modifier = Modifier.size(16.dp))
+                    }
+
+                    // Insert Quote
+                    IconButton(
+                        onClick = {
+                            val current = localContent
+                            val prefix = if (current.isEmpty() || current.endsWith("\n")) "\" " else "\n\" "
+                            val updated = current + prefix
+                            localContent = updated
+                            onContentChange(updated)
+                        },
+                        modifier = Modifier.size(30.dp)
+                    ) {
+                        Icon(Icons.Default.FormatQuote, contentDescription = "Quote", tint = Color(0xFF555555), modifier = Modifier.size(16.dp))
+                    }
+
+                    // Insert Current Time
+                    IconButton(
+                        onClick = {
+                            val timeNow = SimpleDateFormat("[hh:mm a] ", Locale.getDefault()).format(Date())
+                            val updated = localContent + (if (localContent.isNotEmpty() && !localContent.endsWith("\n")) "\n" else "") + timeNow
+                            localContent = updated
+                            onContentChange(updated)
+                        },
+                        modifier = Modifier.size(30.dp)
+                    ) {
+                        Icon(Icons.Default.Today, contentDescription = "Insert Timestamp", tint = Color(0xFF555555), modifier = Modifier.size(16.dp))
+                    }
+
+                    // Quick Favorite Inks Swatches
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        horizontalArrangement = Arrangement.spacedBy(5.dp),
+                        modifier = Modifier.padding(horizontal = 2.dp)
                     ) {
-                        // Custom Ink Color Picker Trigger Button
-                        Surface(
-                            shape = RoundedCornerShape(14.dp),
-                            color = Color(0xFFF0F0F0),
-                            modifier = Modifier
-                                .clickable { onOpenColorPicker() }
-                                .testTag("custom_ink_color_button_${page.id}")
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(14.dp)
-                                        .background(activeInkColor, CircleShape)
-                                        .border(1.dp, Color(0x33000000), CircleShape)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Icon(
-                                    Icons.Default.Palette,
-                                    contentDescription = "Custom Ink Color",
-                                    tint = Color(0xFF424242),
-                                    modifier = Modifier.size(15.dp)
-                                )
-                            }
-                        }
+                        ColorUtils.quickFavorites.forEach { hexColor ->
+                            val swatchColor = ColorUtils.parseColor(hexColor)
+                            val isSelected = activeInkHex.equals(hexColor, ignoreCase = true)
 
-                        // Attach Photo Button
-                        FilledTonalIconButton(
-                            onClick = onAddImageClick,
-                            modifier = Modifier.size(32.dp).testTag("attach_image_button_${page.id}"),
-                            colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                containerColor = Color(0xFFEEEEEE),
-                                contentColor = Color(0xFF1E88E5)
+                            Box(
+                                modifier = Modifier
+                                    .size(if (isSelected) 20.dp else 16.dp)
+                                    .clip(CircleShape)
+                                    .background(swatchColor)
+                                    .border(
+                                        width = if (isSelected) 2.dp else 1.dp,
+                                        color = if (isSelected) Color(0xFF1976D2) else Color(0x33000000),
+                                        shape = CircleShape
+                                    )
+                                    .clickable { onSelectQuickColor(hexColor) }
                             )
-                        ) {
-                            Icon(Icons.Default.AddPhotoAlternate, contentDescription = "Attach Photo", modifier = Modifier.size(17.dp))
                         }
+                    }
+
+                    // Custom Ink Color Picker Trigger Button
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = Color(0xFFF0F0F0),
+                        modifier = Modifier
+                            .clickable { onOpenColorPicker() }
+                            .testTag("custom_ink_color_button_${page.id}")
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(14.dp)
+                                    .background(activeInkColor, CircleShape)
+                                    .border(1.dp, Color(0x33000000), CircleShape)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                Icons.Default.Palette,
+                                contentDescription = "Custom Ink Color",
+                                tint = Color(0xFF424242),
+                                modifier = Modifier.size(15.dp)
+                            )
+                        }
+                    }
+
+                    // Attach Photo Button
+                    FilledTonalIconButton(
+                        onClick = onAddImageClick,
+                        modifier = Modifier.size(32.dp).testTag("attach_image_button_${page.id}"),
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = Color(0xFFEEEEEE),
+                            contentColor = Color(0xFF1E88E5)
+                        )
+                    ) {
+                        Icon(Icons.Default.AddPhotoAlternate, contentDescription = "Attach Photo", modifier = Modifier.size(17.dp))
                     }
                 }
 
