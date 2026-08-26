@@ -103,6 +103,7 @@ import com.example.util.ColorUtils
 import com.example.util.ImageStorage
 import com.example.util.LineDrawingUtils
 import com.example.util.LineStyle
+import com.example.util.RichTextHelper
 import com.example.util.StraightLine
 import java.io.File
 import java.text.SimpleDateFormat
@@ -158,6 +159,7 @@ fun PureWhitePageContent(
 
     val contentFocusRequester = remember { FocusRequester() }
     var showFontSizeDialog by remember { mutableStateOf(false) }
+    var showLetterColorStudio by remember { mutableStateOf(false) }
 
     val imageList = remember(page.imageUrisJson) {
         ImageStorage.parseJsonArray(page.imageUrisJson)
@@ -522,7 +524,7 @@ fun PureWhitePageContent(
                                     modifier = Modifier
                                         .size(24.dp)
                                         .testTag("font_size_increase_${page.id}")
-                                ) {
+                                 ) {
                                     Text(
                                         text = "A+",
                                         fontSize = 12.sp,
@@ -530,6 +532,36 @@ fun PureWhitePageContent(
                                         color = Color(0xFF283593)
                                     )
                                 }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(6.dp))
+
+                        // Letters Color Studio Button (Individual letter color & rainbow)
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = Color(0xFFFFF3E0),
+                            border = ButtonDefaults.outlinedButtonBorder.copy(
+                                brush = Brush.horizontalGradient(listOf(Color(0xFFFF9800), Color(0xFFE91E63))),
+                                width = 1.dp
+                            ),
+                            modifier = Modifier
+                                .clickable { showLetterColorStudio = true }
+                                .padding(horizontal = 2.dp)
+                                .testTag("letter_color_studio_button_${page.id}")
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp)
+                            ) {
+                                Text("🔤", fontSize = 12.sp)
+                                Spacer(modifier = Modifier.width(3.dp))
+                                Text(
+                                    text = "Letters Color",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFE65100)
+                                )
                             }
                         }
 
@@ -810,44 +842,107 @@ fun PureWhitePageContent(
                     }
                 }
 
-                // Note Body Text Editor (Instant reactive typing & click-to-focus)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .defaultMinSize(minHeight = 380.dp)
-                        .clickable { contentFocusRequester.requestFocus() }
-                ) {
-                    BasicTextField(
-                        value = localContent,
-                        onValueChange = { newContent ->
-                            localContent = newContent
-                            onContentChange(newContent)
-                        },
-                        textStyle = TextStyle(
-                            fontSize = fontSizeSp.sp,
-                            lineHeight = (fontSizeSp * 1.55f).sp,
-                            fontFamily = FontFamily.SansSerif,
-                            color = activeInkColor
-                        ),
-                        cursorBrush = SolidColor(activeInkColor),
+                // Note Body Text Editor (Instant reactive typing & rich letter coloring)
+                val hasLetterColorMarkup = remember(localContent) { localContent.contains("<c:") }
+
+                if (hasLetterColorMarkup) {
+                    // Rich Colored Letters Display with Click-to-Edit & Studio Button
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .defaultMinSize(minHeight = 380.dp)
-                            .focusRequester(contentFocusRequester)
-                            .testTag("page_content_input_${page.id}"),
-                        decorationBox = { innerTextField ->
-                            if (localContent.isEmpty()) {
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color(0xFFFFF8E1),
+                            border = ButtonDefaults.outlinedButtonBorder.copy(
+                                brush = Brush.horizontalGradient(listOf(Color(0xFFFFB300), Color(0xFFFF4081)))
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp)
+                                .clickable { showLetterColorStudio = true }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text("🌈", fontSize = 14.sp)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Custom Letter Colors Active",
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFBF360C)
+                                    )
+                                }
                                 Text(
-                                    text = "Start writing your thoughts, notes, and ideas on this pure white page...\n\n• Tap 'Draw Line' above to draw crisp straight lines in any direction\n• Tap 'A-' or 'A+' to make your writing smaller or larger\n• Tap the palette button to change your writing ink color\n• Tap the photo icon to attach pictures\n• Turn pages with realistic Google Play Books 3D curl\n• Everything is permanently saved and editable anytime",
-                                    fontSize = fontSizeSp.sp,
-                                    lineHeight = (fontSizeSp * 1.55f).sp,
-                                    color = Color(0xFF9E9E9E),
-                                    fontFamily = FontFamily.SansSerif
+                                    text = "Tap to Customize Letters ➔",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFF1976D2)
                                 )
                             }
-                            innerTextField()
                         }
-                    )
+
+                        val annotated = remember(localContent, activeInkColor) {
+                            RichTextHelper.parseToAnnotatedString(localContent, activeInkColor)
+                        }
+
+                        Text(
+                            text = annotated,
+                            fontSize = fontSizeSp.sp,
+                            lineHeight = (fontSizeSp * 1.55f).sp,
+                            fontFamily = FontFamily.Serif,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .defaultMinSize(minHeight = 320.dp)
+                                .clickable { showLetterColorStudio = true }
+                                .testTag("page_rich_content_display_${page.id}")
+                        )
+                    }
+                } else {
+                    // Standard Direct Text Field
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .defaultMinSize(minHeight = 380.dp)
+                            .clickable { contentFocusRequester.requestFocus() }
+                    ) {
+                        BasicTextField(
+                            value = localContent,
+                            onValueChange = { newContent ->
+                                localContent = newContent
+                                onContentChange(newContent)
+                            },
+                            textStyle = TextStyle(
+                                fontSize = fontSizeSp.sp,
+                                lineHeight = (fontSizeSp * 1.55f).sp,
+                                fontFamily = FontFamily.SansSerif,
+                                color = activeInkColor
+                            ),
+                            cursorBrush = SolidColor(activeInkColor),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .defaultMinSize(minHeight = 380.dp)
+                                .focusRequester(contentFocusRequester)
+                                .testTag("page_content_input_${page.id}"),
+                            decorationBox = { innerTextField ->
+                                if (localContent.isEmpty()) {
+                                    Text(
+                                        text = "Start writing your thoughts, notes, and ideas on this pure white page...\n\n• Tap 'Letters Color' above to color individual letters or rainbow 🌈\n• Tap 'Draw Line' above to draw crisp straight lines in any direction\n• Tap 'A-' or 'A+' to make your writing smaller or larger\n• Tap the palette button to change your writing ink color\n• Tap the photo icon to attach pictures\n• Turn pages with realistic Google Play Books 3D curl\n• Everything is permanently saved and editable anytime",
+                                        fontSize = fontSizeSp.sp,
+                                        lineHeight = (fontSizeSp * 1.55f).sp,
+                                        color = Color(0xFF9E9E9E),
+                                        fontFamily = FontFamily.SansSerif
+                                    )
+                                }
+                                innerTextField()
+                            }
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -1104,6 +1199,20 @@ fun PureWhitePageContent(
                         ) {
                             Text("Done / Theek Hai", color = Color.White)
                         }
+                    }
+                )
+            }
+
+            // Letter Color Studio Dialog
+            if (showLetterColorStudio) {
+                LetterColorStudioDialog(
+                    initialText = localContent,
+                    defaultInkHex = activeInkHex,
+                    fontSizeSp = fontSizeSp,
+                    onDismiss = { showLetterColorStudio = false },
+                    onApplyFormattedText = { formatted ->
+                        localContent = formatted
+                        onContentChange(formatted)
                     }
                 )
             }

@@ -66,6 +66,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
@@ -82,7 +83,9 @@ import coil.compose.AsyncImage
 import com.example.data.model.NotebookPage
 import com.example.data.model.NotebookSettings
 import com.example.util.ColorUtils
+import com.example.util.ColoredLetter
 import com.example.util.ImageStorage
+import com.example.util.RichTextHelper
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -125,55 +128,58 @@ fun CoverCustomizerDialog(
                 Text("Cover Theme:", fontWeight = FontWeight.SemiBold, fontSize = 12.5.sp, color = Color(0xFF333333))
                 Spacer(modifier = Modifier.height(6.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // Rainbow Mixup Style Card
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = if (selectedStyle == "RAINBOW_MIXUP") Color(0xFFEDE7F6) else Color(0xFFF5F5F5),
-                        border = if (selectedStyle == "RAINBOW_MIXUP") ButtonDefaults.outlinedButtonBorder.copy(
-                            brush = androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(Color(0xFFFF007F), Color(0xFF00E5FF)))
-                        ) else null,
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable {
-                                selectedStyle = "RAINBOW_MIXUP"
-                                onSelectCoverStyle("RAINBOW_MIXUP")
-                            }
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(vertical = 10.dp, horizontal = 6.dp)
-                        ) {
-                            Text("🌈", fontSize = 20.sp)
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text("Rainbow Mix", fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
+                // Rich Grid of Cover Themes
+                data class CoverThemeEntry(val id: String, val name: String, val brush: Brush)
 
-                    // Gold Ornate Style Card
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = if (selectedStyle == "GOLD_ORNATE") Color(0xFFFFF8E1) else Color(0xFFF5F5F5),
-                        border = if (selectedStyle == "GOLD_ORNATE") ButtonDefaults.outlinedButtonBorder.copy(
-                            brush = androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(Color(0xFFFFD54F), Color(0xFFC79824)))
-                        ) else null,
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable {
-                                selectedStyle = "GOLD_ORNATE"
-                                onSelectCoverStyle("GOLD_ORNATE")
-                            }
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(vertical = 10.dp, horizontal = 6.dp)
+                val coverThemes = listOf(
+                    CoverThemeEntry("GOLD_ORNATE", "Classic Gold 👑", Brush.horizontalGradient(listOf(Color(0xFFFFF0B8), Color(0xFFC79824)))),
+                    CoverThemeEntry("RAINBOW_MIXUP", "Rainbow Mix 🌈", Brush.horizontalGradient(listOf(Color(0xFFFF007F), Color(0xFF00E5FF)))),
+                    CoverThemeEntry("ROYAL_EMERALD", "Royal Emerald 💎", Brush.horizontalGradient(listOf(Color(0xFF0A4434), Color(0xFFDFB448)))),
+                    CoverThemeEntry("MIDNIGHT_SAPPHIRE", "Midnight Sapphire 🌌", Brush.horizontalGradient(listOf(Color(0xFF0A1128), Color(0xFF60A5FA)))),
+                    CoverThemeEntry("CRIMSON_ROYALTY", "Crimson Royalty 🌹", Brush.horizontalGradient(listOf(Color(0xFF4A0815), Color(0xFFFFD54F)))),
+                    CoverThemeEntry("OBSIDIAN_PLATINUM", "Obsidian Platinum 🖤", Brush.horizontalGradient(listOf(Color(0xFF1E1E1E), Color(0xFFE0E0E0)))),
+                    CoverThemeEntry("SUNSET_AURORA", "Sunset Aurora 🌅", Brush.horizontalGradient(listOf(Color(0xFF880E4F), Color(0xFFFFB300))))
+                )
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    for (rowItems in coverThemes.chunked(2)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text("👑", fontSize = 20.sp)
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text("Classic Gold", fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                            for (theme in rowItems) {
+                                val isSelected = selectedStyle == theme.id
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = if (isSelected) Color(0xFFFFF9E6) else Color(0xFFF7F7F7),
+                                    border = if (isSelected) ButtonDefaults.outlinedButtonBorder.copy(
+                                        brush = theme.brush,
+                                        width = 2.dp
+                                    ) else ButtonDefaults.outlinedButtonBorder.copy(
+                                        brush = Brush.horizontalGradient(listOf(Color(0xFFE0E0E0), Color(0xFFE0E0E0))),
+                                        width = 1.dp
+                                    ),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clickable {
+                                            selectedStyle = theme.id
+                                            onSelectCoverStyle(theme.id)
+                                        }
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.padding(vertical = 10.dp, horizontal = 6.dp)
+                                    ) {
+                                        Text(theme.name, fontSize = 12.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium, textAlign = TextAlign.Center)
+                                    }
+                                }
+                            }
+                            if (rowItems.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
                         }
                     }
                 }
@@ -960,4 +966,496 @@ fun InkColorPickerDialog(
         dismissButton = {}
     )
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LetterColorStudioDialog(
+    initialText: String,
+    defaultInkHex: String,
+    fontSizeSp: Float,
+    onDismiss: () -> Unit,
+    onApplyFormattedText: (String) -> Unit
+) {
+    var rawDraftText by remember(initialText) {
+        mutableStateOf(if (initialText.isBlank()) "Write colorful thoughts in your notebook!" else initialText)
+    }
+
+    var letterList by remember(rawDraftText) {
+        mutableStateOf(RichTextHelper.decomposeIntoColoredLetters(rawDraftText, defaultInkHex))
+    }
+
+    var selectedIndices by remember { mutableStateOf(setOf<Int>()) }
+    var activeColorHex by remember { mutableStateOf("#E53935") }
+    var activeTab by remember { mutableIntStateOf(0) } // 0: Curated Colors, 1: Custom RGB Mixer
+
+    val activeColor = remember(activeColorHex) { ColorUtils.parseColor(activeColorHex) }
+    var redVal by remember(activeColor) { mutableFloatStateOf(((activeColor.toArgb() shr 16) and 0xFF).toFloat()) }
+    var greenVal by remember(activeColor) { mutableFloatStateOf(((activeColor.toArgb() shr 8) and 0xFF).toFloat()) }
+    var blueVal by remember(activeColor) { mutableFloatStateOf((activeColor.toArgb() and 0xFF).toFloat()) }
+    var hexInputText by remember(activeColorHex) { mutableStateOf(activeColorHex.removePrefix("#")) }
+
+    fun applyColorToLetters(hex: String) {
+        val updated = letterList.toMutableList()
+        if (selectedIndices.isEmpty()) {
+            // Apply to all non-whitespace letters
+            for (i in updated.indices) {
+                if (!updated[i].char.isWhitespace()) {
+                    updated[i] = updated[i].copy(hexColor = hex)
+                }
+            }
+        } else {
+            // Apply to selected indices
+            for (idx in selectedIndices) {
+                if (idx in updated.indices && !updated[idx].char.isWhitespace()) {
+                    updated[idx] = updated[idx].copy(hexColor = hex)
+                }
+            }
+        }
+        letterList = updated
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.fillMaxWidth(0.96f),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("🔤", fontSize = 22.sp)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = "Letter Color Studio",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 17.sp,
+                            fontFamily = FontFamily.Serif
+                        )
+                        Text(
+                            text = "Har letter ke liye manchaha color chunein",
+                            fontSize = 11.sp,
+                            color = Color(0xFF616161)
+                        )
+                    }
+                }
+
+                IconButton(onClick = onDismiss, modifier = Modifier.size(28.dp)) {
+                    Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.Gray, modifier = Modifier.size(20.dp))
+                }
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                // 1. Live Pure White Card Preview of Colored Letters
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFFFF)),
+                    border = CardDefaults.outlinedCardBorder()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Live Page Preview",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF888888)
+                            )
+
+                            Text(
+                                text = "${letterList.count { !it.char.isWhitespace() }} Letters • ${if (selectedIndices.isEmpty()) "All Selected" else "${selectedIndices.size} Selected"}",
+                                fontSize = 10.5.sp,
+                                color = Color(0xFF1976D2),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        val formattedResult = remember(letterList) {
+                            RichTextHelper.composeFromColoredLetters(letterList)
+                        }
+                        val annotated = remember(formattedResult, defaultInkHex) {
+                            RichTextHelper.parseToAnnotatedString(formattedResult, ColorUtils.parseColor(defaultInkHex))
+                        }
+
+                        Text(
+                            text = annotated,
+                            fontSize = fontSizeSp.sp,
+                            lineHeight = (fontSizeSp * 1.45f).sp,
+                            fontFamily = FontFamily.Serif
+                        )
+                    }
+                }
+
+                // 2. Quick Effect Action Chips (Rainbow, Alternate, Reset)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    // Rainbow All Letters
+                    Button(
+                        onClick = {
+                            val plain = RichTextHelper.stripColorTags(RichTextHelper.composeFromColoredLetters(letterList))
+                            val rainbowStr = RichTextHelper.makeRainbowLetters(plain)
+                            letterList = RichTextHelper.decomposeIntoColoredLetters(rainbowStr, defaultInkHex)
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF673AB7),
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.weight(1f),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 6.dp)
+                    ) {
+                        Text("🌈 Rainbow", fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    // Alternate 2 Colors
+                    OutlinedButton(
+                        onClick = {
+                            val plain = RichTextHelper.stripColorTags(RichTextHelper.composeFromColoredLetters(letterList))
+                            val altStr = RichTextHelper.alternateColors(plain, activeColorHex, "#1E88E5")
+                            letterList = RichTextHelper.decomposeIntoColoredLetters(altStr, defaultInkHex)
+                        },
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.weight(1f),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 6.dp)
+                    ) {
+                        Text("🎨 2 Colors", fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold)
+                    }
+
+                    // Reset Ink
+                    OutlinedButton(
+                        onClick = {
+                            val updated = letterList.map { it.copy(hexColor = null) }
+                            letterList = updated
+                            selectedIndices = emptySet()
+                        },
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.weight(1f),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 6.dp)
+                    ) {
+                        Text("🧹 Reset", fontSize = 11.5.sp)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // 3. Interactive Letter Grid / Chips
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Tap letters to select & color individually:",
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF424242)
+                    )
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        TextButton(
+                            onClick = {
+                                selectedIndices = letterList.indices.filter { !letterList[it].char.isWhitespace() }.toSet()
+                            },
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 2.dp)
+                        ) {
+                            Text("Select All", fontSize = 11.sp)
+                        }
+
+                        if (selectedIndices.isNotEmpty()) {
+                            TextButton(
+                                onClick = { selectedIndices = emptySet() },
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 2.dp)
+                            ) {
+                                Text("Clear", fontSize = 11.sp, color = Color(0xFFE53935))
+                            }
+                        }
+                    }
+                }
+
+                // Interactive letter tiles
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color(0xFFF9F9F9),
+                    border = CardDefaults.outlinedCardBorder(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        // Letter tiles row flow
+                        val maxLettersPerRow = 9
+                        val chunks = letterList.chunked(maxLettersPerRow)
+
+                        for ((rowIndex, chunk) in chunks.withIndex()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 2.dp),
+                                horizontalArrangement = Arrangement.Start
+                            ) {
+                                for ((colIndex, item) in chunk.withIndex()) {
+                                    val actualIdx = rowIndex * maxLettersPerRow + colIndex
+                                    val isSelected = selectedIndices.contains(actualIdx)
+                                    val itemColor = item.hexColor?.let { ColorUtils.parseColor(it) }
+                                        ?: ColorUtils.parseColor(defaultInkHex)
+
+                                    if (item.char == '\n') {
+                                        // Line break badge
+                                        Surface(
+                                            shape = RoundedCornerShape(4.dp),
+                                            color = Color(0xFFECEFF1),
+                                            modifier = Modifier.padding(2.dp)
+                                        ) {
+                                            Text("↵", fontSize = 11.sp, color = Color.Gray, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
+                                        }
+                                    } else if (item.char.isWhitespace()) {
+                                        // Space badge
+                                        Box(
+                                            modifier = Modifier
+                                                .size(width = 16.dp, height = 28.dp)
+                                                .padding(2.dp)
+                                        )
+                                    } else {
+                                        Surface(
+                                            shape = RoundedCornerShape(6.dp),
+                                            color = if (isSelected) Color(0xFFFFEB3B) else Color.White,
+                                            border = if (isSelected) ButtonDefaults.outlinedButtonBorder.copy(
+                                                brush = Brush.horizontalGradient(listOf(Color(0xFFE65100), Color(0xFFFF9800))),
+                                                width = 2.dp
+                                            ) else ButtonDefaults.outlinedButtonBorder.copy(
+                                                brush = Brush.horizontalGradient(listOf(Color(0xFFE0E0E0), Color(0xFFE0E0E0))),
+                                                width = 1.dp
+                                            ),
+                                            modifier = Modifier
+                                                .size(width = 28.dp, height = 32.dp)
+                                                .padding(2.dp)
+                                                .clickable {
+                                                    selectedIndices = if (isSelected) {
+                                                        selectedIndices - actualIdx
+                                                    } else {
+                                                        selectedIndices + actualIdx
+                                                    }
+                                                }
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Text(
+                                                    text = item.char.toString(),
+                                                    fontSize = 15.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = itemColor
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // 4. Color Selection Tabs (Palette vs Custom RGB)
+                TabRow(
+                    selectedTabIndex = activeTab,
+                    containerColor = Color(0xFFEEEEEE),
+                    modifier = Modifier.clip(RoundedCornerShape(8.dp))
+                ) {
+                    Tab(
+                        selected = activeTab == 0,
+                        onClick = { activeTab = 0 },
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Palette, contentDescription = null, modifier = Modifier.size(15.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Letter Palette", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+                    )
+                    Tab(
+                        selected = activeTab == 1,
+                        onClick = { activeTab = 1 },
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(15.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Custom Color", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                if (activeTab == 0) {
+                    // Palette Chips
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        val chunks = RichTextHelper.letterColorPalette.chunked(6)
+                        for (colorRow in chunks) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                for (preset in colorRow) {
+                                    val isSelected = activeColorHex.equals(preset.hex, ignoreCase = true)
+                                    val c = ColorUtils.parseColor(preset.hex)
+
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(34.dp)
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(c)
+                                            .border(
+                                                width = if (isSelected) 2.5.dp else 1.dp,
+                                                color = if (isSelected) Color.White else Color(0x33000000),
+                                                shape = RoundedCornerShape(6.dp)
+                                            )
+                                            .clickable {
+                                                activeColorHex = preset.hex
+                                                hexInputText = preset.hex.removePrefix("#")
+                                                applyColorToLetters(preset.hex)
+                                            },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (isSelected) {
+                                            Icon(
+                                                Icons.Default.Check,
+                                                contentDescription = "Active",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // Custom RGB Mixer
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = hexInputText,
+                            onValueChange = { input ->
+                                val clean = input.filter { it.isLetterOrDigit() }.take(6)
+                                hexInputText = clean
+                                if (clean.length == 6) {
+                                    val formatted = "#$clean"
+                                    activeColorHex = formatted
+                                    val c = ColorUtils.parseColor(formatted)
+                                    val argb = c.toArgb()
+                                    redVal = ((argb shr 16) and 0xFF).toFloat()
+                                    greenVal = ((argb shr 8) and 0xFF).toFloat()
+                                    blueVal = (argb and 0xFF).toFloat()
+                                    applyColorToLetters(formatted)
+                                }
+                            },
+                            label = { Text("Hex Code (#RRGGBB)") },
+                            prefix = { Text("#", fontWeight = FontWeight.Bold) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Red
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Red", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFD32F2F), modifier = Modifier.width(42.dp))
+                            Slider(
+                                value = redVal,
+                                onValueChange = {
+                                    redVal = it
+                                    val c = Color(redVal.toInt(), greenVal.toInt(), blueVal.toInt())
+                                    activeColorHex = ColorUtils.toHex(c)
+                                    hexInputText = activeColorHex.removePrefix("#")
+                                    applyColorToLetters(activeColorHex)
+                                },
+                                valueRange = 0f..255f,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text("${redVal.toInt()}", fontSize = 11.sp, modifier = Modifier.width(30.dp), textAlign = TextAlign.End)
+                        }
+
+                        // Green
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Green", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF388E3C), modifier = Modifier.width(42.dp))
+                            Slider(
+                                value = greenVal,
+                                onValueChange = {
+                                    greenVal = it
+                                    val c = Color(redVal.toInt(), greenVal.toInt(), blueVal.toInt())
+                                    activeColorHex = ColorUtils.toHex(c)
+                                    hexInputText = activeColorHex.removePrefix("#")
+                                    applyColorToLetters(activeColorHex)
+                                },
+                                valueRange = 0f..255f,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text("${greenVal.toInt()}", fontSize = 11.sp, modifier = Modifier.width(30.dp), textAlign = TextAlign.End)
+                        }
+
+                        // Blue
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Blue", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1976D2), modifier = Modifier.width(42.dp))
+                            Slider(
+                                value = blueVal,
+                                onValueChange = {
+                                    blueVal = it
+                                    val c = Color(redVal.toInt(), greenVal.toInt(), blueVal.toInt())
+                                    activeColorHex = ColorUtils.toHex(c)
+                                    hexInputText = activeColorHex.removePrefix("#")
+                                    applyColorToLetters(activeColorHex)
+                                },
+                                valueRange = 0f..255f,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text("${blueVal.toInt()}", fontSize = 11.sp, modifier = Modifier.width(30.dp), textAlign = TextAlign.End)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val finalFormatted = RichTextHelper.composeFromColoredLetters(letterList)
+                    onApplyFormattedText(finalFormatted)
+                    onDismiss()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E88E5)),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("✓ Save Colored Letters to Page", fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
+            }
+        },
+        dismissButton = {}
+    )
+}
+
 
